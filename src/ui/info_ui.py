@@ -1,5 +1,3 @@
-# --- Mulai dari sini, copy semua ke info_ui.py ---
-
 import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
@@ -16,6 +14,7 @@ class InfoUI:
         self.card_size = (50, 75)
         self.card_tk_images = []
 
+        # Define hand rankings: (name, score, card images, description)
         self.hand_rankings = [
             ("Royal Flush", 100,
              ["card_hearts_A.png", "card_hearts_K.png", "card_hearts_Q.png", "card_hearts_J.png", "card_hearts_10.png"],
@@ -49,98 +48,104 @@ class InfoUI:
               "card_hearts_K.png"], "Highest value card"),
         ]
 
-        # --- Scrollable canvas setup ---
+        # --- Set up scrollable canvas layout ---
         self.canvas = tk.Canvas(self.root, bg=self.bg_color, highlightthickness=0)
         self.scrollbar = ttk.Scrollbar(self.root, orient="vertical", command=self.canvas.yview)
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
 
+        # Pack canvas and scrollbar
         self.scrollbar.pack(side="right", fill="y")
         self.canvas.pack(side="left", fill="both", expand=True)
 
-        # Container that fills canvas width
+        # Frame inside canvas that holds the content
         self.content_container = tk.Frame(self.canvas, bg=self.bg_color)
-        # Store the window ID to reference it later
         self.content_window_id = self.canvas.create_window((0, 0), window=self.content_container, anchor="nw")
 
-        # Centered content frame inside the container
+        # Actual content frame centered inside container
         self.content_frame = tk.Frame(self.content_container, bg=self.bg_color)
         self.content_frame.pack(anchor="center", pady=20)
 
-        # Scroll bindings
-        # Bind to the container frame's <Configure> event
+        # Scroll bindings for all platforms
         self.content_container.bind("<Configure>", self.on_frame_configure)
-        # Bind to the canvas's <Configure> event to resize the content_container
         self.canvas.bind("<Configure>", self.on_canvas_configure)
+        self.canvas.bind_all("<MouseWheel>", self.on_mousewheel)          # Windows/macOS
+        self.canvas.bind_all("<Button-4>", self.on_mousewheel_linux)      # Linux scroll up
+        self.canvas.bind_all("<Button-5>", self.on_mousewheel_linux)      # Linux scroll down
 
-        self.canvas.bind_all("<MouseWheel>", self.on_mousewheel)           # Windows/macOS
-        self.canvas.bind_all("<Button-4>", self.on_mousewheel_linux)       # Linux scroll up
-        self.canvas.bind_all("<Button-5>", self.on_mousewheel_linux)       # Linux scroll down
-
+        # Render UI components
         self.render()
 
     def on_frame_configure(self, event):
-        # Update scrollregion whenever the content frame's size changes
+        # Update scrollable area size
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     def on_canvas_configure(self, event):
-        # Resize the window item on the canvas to match the canvas's width
+        # Ensure content container matches canvas width
         self.canvas.itemconfig(self.content_window_id, width=event.width)
 
     def on_mousewheel(self, event):
+        # Scroll content vertically (Windows/macOS)
         self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
     def on_mousewheel_linux(self, event):
+        # Scroll content vertically (Linux)
         if event.num == 4:
             self.canvas.yview_scroll(-1, "units")
         elif event.num == 5:
             self.canvas.yview_scroll(1, "units")
 
     def render(self):
+        # Add main title
         title_label = tk.Label(
             self.content_frame, text="Poker Hand Rankings", font=("Arial", 20, "bold"),
             fg=self.accent_color, bg=self.bg_color
         )
         title_label.pack(pady=(0, 20))
 
+        # Add hand ranking sections
         for i, (name, points, images, desc) in enumerate(self.hand_rankings):
             self.add_hand_info(self.content_frame, name, points, images, desc)
+
+            # Add separator between sections (except last one)
             if i < len(self.hand_rankings) - 1:
                 separator = ttk.Separator(self.content_frame, orient='horizontal')
                 separator.pack(fill='x', padx=20, pady=15)
 
     def add_hand_info(self, parent, name, points, card_files, desc):
+        # Create frame for each hand entry
         entry_frame = tk.Frame(parent, bg=self.bg_color)
         entry_frame.pack()
 
+        # Hand title and points
         title = f"{name} ({points} points)"
         tk.Label(
             entry_frame, text=title, font=("Arial", 16, "bold"),
             fg=self.text_color, bg=self.bg_color
         ).pack(pady=(0, 10))
 
+        # Card image display
         card_frame = tk.Frame(entry_frame, bg=self.bg_color)
         card_frame.pack()
 
         for file_name in card_files:
             path = os.path.join(self.cards_path, file_name)
             try:
+                # Load and display card image
                 img = Image.open(path).resize(self.card_size, Image.LANCZOS)
                 tk_img = ImageTk.PhotoImage(img)
                 self.card_tk_images.append(tk_img)
                 label = tk.Label(card_frame, image=tk_img, bg=self.bg_color, borderwidth=1, relief="solid")
                 label.image = tk_img
-                # Increased padx from 10 to 15 for even wider spacing
                 label.pack(side="left", padx=15)
             except FileNotFoundError:
-                placeholder = tk.Label(card_frame, text="?", font=("Arial", 20, "bold"), width=3, height=1,
-                                       bg="white", borderwidth=1, relief="solid")
-                # Increased padx from 10 to 15 for even wider spacing
+                # Show placeholder if image is missing
+                placeholder = tk.Label(card_frame, text="?", font=("Arial", 20, "bold"),
+                                       width=3, height=1, bg="white", borderwidth=1, relief="solid")
                 placeholder.pack(side="left", padx=15)
 
+        # Description text
         tk.Label(
             entry_frame, text=desc, font=("Arial", 12),
             bg=self.bg_color, fg=self.text_color,
             wraplength=550, justify="center"
         ).pack(pady=(10, 0))
-
-# --- End of info_ui.py file ---

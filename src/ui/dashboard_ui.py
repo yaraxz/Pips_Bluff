@@ -1,9 +1,10 @@
-import os
 import tkinter as tk
 import tkinter.font as tkFont
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageSequence
+
 from .game_ui import GameUI
 from .info_ui import InfoUI
+from .settings_ui import SettingsUI
 
 
 class DashboardUI:
@@ -14,21 +15,24 @@ class DashboardUI:
         self.root.geometry("1024x700")
         self.center_window(1024, 700)
 
+        self.current_page = None  # Track currently active page
+
+        # Load logo image
         try:
-            self.logo_img = Image.open("assets/images/logo.png")
-            self.logo_img = self.logo_img.resize((150, 95), Image.LANCZOS)
+            self.logo_img = Image.open("assets/images/logo.png").resize((150, 95), Image.LANCZOS)
             self.logo_photo = ImageTk.PhotoImage(self.logo_img)
-        except:
+        except Exception as e:
+            print(f"Error loading logo: {e}")
             self.logo_photo = None
 
-        available_fonts = tkFont.families()
-        font_family = 'Arial Rounded MT Bold' if 'Arial Rounded MT Bold' in available_fonts else 'Arial'
-
+        # Define fonts
+        font_family = 'Arial Rounded MT Bold' if 'Arial Rounded MT Bold' in tkFont.families() else 'Arial'
         self.base_font = tkFont.Font(family=font_family, size=12)
         self.bold_font = tkFont.Font(family=font_family, size=12, weight='bold')
         self.header_font = tkFont.Font(family=font_family, size=16, weight='bold')
         self.title_font = tkFont.Font(family=font_family, size=20, weight='bold')
 
+        # Define UI colors
         self.colors = {
             'bg': '#552CB7',
             'header': '#FD5A46',
@@ -41,6 +45,7 @@ class DashboardUI:
         self.show_profile()
 
     def center_window(self, width, height):
+        # Center the window on the screen
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
         x = (screen_width / 2) - (width / 2)
@@ -48,154 +53,116 @@ class DashboardUI:
         self.root.geometry(f'{width}x{height}+{int(x)}+{int(y)}')
 
     def create_widgets(self):
-        if hasattr(self, "widgets_created") and self.widgets_created:
-            return
-        self.widgets_created = True
-
+        # Create header section
         header_frame = tk.Frame(self.root, bg=self.colors['header'], height=100)
-        header_frame.pack(fill='x')
+        header_frame.pack(fill='x', expand=False)
         header_frame.pack_propagate(False)
 
         if self.logo_photo:
-            logo_label = tk.Label(header_frame, image=self.logo_photo, bg=self.colors['header'])
-            logo_label.pack(expand=True, pady=10)
+            tk.Label(header_frame, image=self.logo_photo, bg=self.colors['header']).pack(expand=True, pady=10)
         else:
-            tk.Label(
-                header_frame,
-                text="PIP'S BLUFF",
-                font=self.title_font,
-                bg=self.colors['header'],
-                fg='white'
-            ).pack(expand=True, pady=20)
+            tk.Label(header_frame, text="PIP'S BLUFF", font=self.title_font, bg=self.colors['header'], fg='white').pack(
+                expand=True, pady=20)
 
+        # Create main content area
         content_frame = tk.Frame(self.root, bg=self.colors['content'])
         content_frame.pack(fill='both', expand=True, padx=20, pady=20)
 
+        # Navigation sidebar
         nav_frame = tk.Frame(content_frame, bg=self.colors['nav'], width=220)
         nav_frame.pack(side='left', fill='y', padx=(0, 20))
         nav_frame.pack_propagate(False)
 
-        buttons_info = [
-            ("Profile", self.show_profile, '#FB7DAB', 'white'),
-            ("Play", self.show_game, '#FFC567', '#333333'),
-            ("Settings", self.show_settings, '#552CB7', 'white'),
-        ]
+        # Navigation buttons
+        buttons_info = [("Profile", self.show_profile), ("Play", self.show_game), ("Settings", self.show_settings)]
+        colors = ['#FB7DAB', '#FFC567', '#552CB7']
 
-        for text, command, bg_color, fg_color in buttons_info:
-            btn = tk.Button(
-                nav_frame,
-                text=text,
-                width=18,
-                bg=bg_color,
-                fg=fg_color,
-                font=self.bold_font,
-                activebackground=bg_color,
-                activeforeground=fg_color,
-                bd=3,
-                relief='raised',
-                command=command,
-                cursor="hand2",
-                pady=8,
-                padx=10
-            )
+        for (text, command), color in zip(buttons_info, colors):
+            btn = tk.Button(nav_frame, text=text, command=command, bg=color, fg='white', font=self.bold_font, bd=3,
+                            relief='raised', cursor="hand2", pady=8)
             btn.pack(pady=8, padx=10, fill='x')
 
+            # Add extra button under "Play"
             if text == "Play":
-                info_btn = tk.Button(
-                    nav_frame,
-                    text="Hand Info",
-                    width=18,
-                    bg='#058CD7',
-                    fg='white',
-                    font=self.bold_font,
-                    activebackground='#058CD7',
-                    activeforeground='white',
-                    bd=3,
-                    relief='raised',
-                    command=self.show_info,
-                    cursor="hand2",
-                    pady=6,
-                    padx=10
-                )
+                info_btn = tk.Button(nav_frame, text="Hand Info", command=self.show_info, bg='#058CD7', fg='white',
+                                     font=self.bold_font, bd=3, relief='raised', cursor="hand2", pady=6)
                 info_btn.pack(pady=(0, 8), padx=10, fill='x')
 
+        # Main content display area
         self.main_display = tk.Frame(content_frame, bg=self.colors['content'])
         self.main_display.pack(side='right', fill='both', expand=True)
 
     def show_profile(self):
         self.clear_main_display()
-        tk.Label(
-            self.main_display,
-            text="User Profile",
-            font=self.header_font,
-            bg=self.colors['content'],
-            fg='#552CB7',
-            pady=10
-        ).pack(fill='x')
+        self.current_page = None
 
-        info_frame = tk.Frame(self.main_display, bg=self.colors['content'], padx=20, pady=10)
-        info_frame.pack(fill='both', expand=True)
+        # Main profile layout
+        profile_frame = tk.Frame(self.main_display, bg=self.colors['content'])
+        profile_frame.pack(fill='both', expand=True, padx=20, pady=20)
 
-        tk.Label(
-            info_frame,
-            text="Username:",
-            bg=self.colors['content'],
-            fg='#FD5A46',
-            font=self.bold_font,
-            width=12,
-            anchor='e'
-        ).grid(row=0, column=0, sticky='e', pady=5)
+        # Top section (title & username)
+        top_frame = tk.Frame(profile_frame, bg=self.colors['content'])
+        top_frame.pack(anchor='nw', fill='x')
 
-        tk.Label(
-            info_frame,
-            text=self.username,
-            bg=self.colors['content'],
-            fg='#058CD7',
-            font=self.base_font,
-            anchor='w'
-        ).grid(row=0, column=1, sticky='w', pady=5)
+        tk.Label(top_frame, text="User Profile", font=self.header_font,
+                 bg=self.colors['content'], fg='#552CB7').pack(anchor='center', pady=(0, 10))
+
+        user_info_frame = tk.Frame(profile_frame, bg=self.colors['content'])
+        user_info_frame.pack(anchor='nw', padx=10, pady=(0, 20))
+
+        tk.Label(user_info_frame, text="Username:", bg=self.colors['content'], fg='#FD5A46',
+                 font=self.bold_font).grid(row=0, column=0, sticky='w')
+        tk.Label(user_info_frame, text=self.username, bg=self.colors['content'], fg='#058CD7',
+                 font=self.base_font).grid(row=0, column=1, sticky='w')
+
+        # Centered GIF frame
+        gif_holder = tk.Frame(profile_frame, bg=self.colors['content'])
+        gif_holder.pack(expand=True)
+
+        try:
+            gif_path = "assets/gif/gif1.gif"
+            gif = Image.open(gif_path)
+
+            self.gif_frames = [
+                ImageTk.PhotoImage(frame.copy().convert('RGBA').resize((400, 300), Image.LANCZOS))
+                for frame in ImageSequence.Iterator(gif)
+            ]
+            self.gif_index = 0
+
+            self.gif_label = tk.Label(gif_holder, bg=self.colors['content'])
+            self.gif_label.pack()
+            self.animate_gif()
+        except Exception as e:
+            print(f"Error loading animated gif: {e}")
 
     def show_game(self):
+        # Show game UI
         self.clear_main_display()
-        GameUI(self.main_display, self.username, "assets/images")
+        self.current_page = GameUI(self.main_display, self.username, "assets/images")
 
     def show_settings(self):
+        # Show settings UI
         self.clear_main_display()
-        tk.Label(
-            self.main_display,
-            text="Settings",
-            font=self.header_font,
-            bg='white',
-            fg='#552CB7',
-            pady=10
-        ).pack(fill='x')
-
-        settings_frame = tk.Frame(self.main_display, bg=self.colors['content'], padx=20, pady=10)
-        settings_frame.pack(fill='both', expand=True)
-
-        logout_btn = tk.Button(
-            settings_frame,
-            text="Logout",
-            width=18,
-            bg='#FD5A46',
-            fg='white',
-            font=self.bold_font,
-            activebackground='#FD5A46',
-            activeforeground='white',
-            bd=3,
-            relief='raised',
-            command=self.logout,
-            cursor="hand2",
-            pady=8,
-            padx=10
-        )
-        logout_btn.grid(row=1, column=0, columnspan=2, pady=20)
+        self.current_page = SettingsUI(self.main_display, self.username, self)
 
     def show_info(self):
+        # Show hand info UI
         self.clear_main_display()
-        InfoUI(self.main_display, self.show_profile)
+        self.current_page = InfoUI(self.main_display, self)
+
+    def animate_gif(self):
+        if hasattr(self, 'gif_label') and self.gif_label.winfo_exists():  # Check if the widget exists
+            if hasattr(self, 'gif_frames') and self.gif_frames:
+                self.gif_label.configure(image=self.gif_frames[self.gif_index])
+                self.gif_index = (self.gif_index + 1) % len(self.gif_frames)
+                self.root.after(100, self.animate_gif)  # Adjust delay to control animation speed
+
+    def update_username(self, new_username):
+        # Update username variable
+        self.username = new_username
 
     def logout(self):
+        # Destroy current window and return to login
         from .login_ui import LoginUI
         self.root.destroy()
         login_root = tk.Tk()
@@ -203,5 +170,7 @@ class DashboardUI:
         login_root.mainloop()
 
     def clear_main_display(self):
+        # Clear the content display area
+        self.current_page = None
         for widget in self.main_display.winfo_children():
             widget.destroy()

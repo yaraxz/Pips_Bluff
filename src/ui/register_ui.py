@@ -12,6 +12,7 @@ class RegisterUI:
         self.root.geometry("600x500")
         self.center_window(600, 500)
 
+        # Set consistent font family depending on system availability
         available_fonts = tkFont.families()
         font_family = 'Verdana' if 'Verdana' in available_fonts else ('Arial' if 'Arial' in available_fonts else 'Helvetica')
 
@@ -19,10 +20,14 @@ class RegisterUI:
         self.bold_font = tkFont.Font(family=font_family, size=14, weight='bold')
         self.title_font = tkFont.Font(family=font_family, size=24, weight='bold')
 
+        # Register handler instance for user creation logic
         self.register_handler = Register()
+
+        # Background color aligned with theme
         self.root.configure(bg='#552CB7')
         self.create_widgets()
 
+    # Center the window on the screen
     def center_window(self, width, height):
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
@@ -30,20 +35,22 @@ class RegisterUI:
         y = (screen_height / 2) - (height / 2)
         self.root.geometry(f'{width}x{height}+{int(x)}+{int(y)}')
 
+    # Create all UI widgets
     def create_widgets(self):
+        # Header with background color
         header_frame = tk.Frame(self.root, bg='#FD5A46', height=100)
         header_frame.pack(fill='x')
         header_frame.pack_propagate(False)
 
         try:
-            # Path to the logo image
+            # Attempt to load and display the logo
             logo_path = os.path.join(os.getcwd(), "assets", "images", "logo.png")
             image = Image.open(logo_path)
-            image = image.resize((175, 120), Image.Resampling.LANCZOS)  # Updated line
+            image = image.resize((175, 120), Image.Resampling.LANCZOS)
             logo = ImageTk.PhotoImage(image)
 
             self.logo_label = tk.Label(header_frame, image=logo, bg='#FD5A46')
-            self.logo_label.image = logo  # prevent garbage collection
+            self.logo_label.image = logo  # Prevent image garbage collection
             self.logo_label.pack(pady=10)
         except Exception as e:
             print("Error loading logo image:", e)
@@ -55,15 +62,19 @@ class RegisterUI:
                 fg='white'
             ).pack(pady=0)
 
+        # Container for form and content
         container = tk.Frame(self.root, bg='#552CB7')
         container.pack(fill='both', expand=True, padx=20, pady=20)
 
+        # White background central form area
         center_frame = tk.Frame(container, bg='white', bd=3, relief='ridge')
         center_frame.place(relx=0.5, rely=0.5, anchor='center')
 
+        # Form area with padding
         form_frame = tk.Frame(center_frame, bg='white', padx=40, pady=30)
         form_frame.pack()
 
+        # Registration form title
         tk.Label(
             form_frame,
             text="Join Us Today!",
@@ -73,6 +84,7 @@ class RegisterUI:
             pady=10
         ).pack()
 
+        # Define form fields and associated attribute names
         fields = [
             ("Username:", "username_entry"),
             ("Email:", "email_entry"),
@@ -80,10 +92,12 @@ class RegisterUI:
             ("Confirm Password:", "confirm_password_entry", "*")
         ]
 
+        # Create label and entry for each form field
         for label_text, attr_name, *show in fields:
             field_frame = tk.Frame(form_frame, bg='white')
             field_frame.pack(pady=12, fill='x')
 
+            # Field label
             tk.Label(
                 field_frame,
                 text=label_text,
@@ -94,6 +108,7 @@ class RegisterUI:
                 anchor='e'
             ).pack(side='left', padx=5)
 
+            # Field entry
             entry = tk.Entry(
                 field_frame,
                 font=self.base_font,
@@ -108,9 +123,11 @@ class RegisterUI:
             entry.pack(side='left')
             setattr(self, attr_name, entry)
 
+        # Buttons Frame
         button_frame = tk.Frame(form_frame, bg='white')
         button_frame.pack(pady=25)
 
+        # Register button (yellow-orange)
         register_btn = tk.Button(
             button_frame,
             text="Register",
@@ -128,6 +145,7 @@ class RegisterUI:
         )
         register_btn.pack(side='left', padx=10)
 
+        # Login button (blue)
         login_btn = tk.Button(
             button_frame,
             text="Login",
@@ -145,27 +163,27 @@ class RegisterUI:
         )
         login_btn.pack(side='left', padx=10)
 
+    # Handle registration logic and validation
     def register(self):
         username = self.username_entry.get()
         email = self.email_entry.get()
         password = self.password_entry.get()
         confirm_password = self.confirm_password_entry.get()
 
+        # Attempt registration
         success, message = self.register_handler.register(
             username, email, password, confirm_password
         )
 
         if success:
-            self.show_login()  # Transition directly to login UI without showing a popup
+            self.show_login()  # Navigate to login screen if successful
         else:
             messagebox.showerror("Registration Error", message)
 
+    # Open login screen and close current window
     def show_login(self):
-        # Destroy the register window to avoid lingering windows
         self.root.destroy()
-
-        # Open the login window in the same root
         from ui.login_ui import LoginUI
-        login_root = tk.Tk()  # Create a new root window
-        LoginUI(login_root)  # Initialize the LoginUI class
-        login_root.mainloop()  # Start the Tkinter main loop for the login UI
+        login_root = tk.Tk()
+        LoginUI(login_root)
+        login_root.mainloop()
