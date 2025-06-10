@@ -1,9 +1,9 @@
 import os
 import tkinter as tk
+import tkinter.font as tkFont
 from tkinter import messagebox
 from PIL import Image, ImageTk
 from auth.login import Login
-import tkinter.font as tkFont
 
 
 class LoginUI:
@@ -13,7 +13,22 @@ class LoginUI:
         self.root.geometry("600x500")
         self.center_window(600, 500)
 
-        # Choose font family based on system availability
+        self.configure_fonts()
+        self.login_handler = Login()
+        self.root.configure(bg='#552CB7')
+
+        self.create_widgets()
+
+    def center_window(self, width, height):
+        """Center the window on the screen."""
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        x = (screen_width - width) // 2
+        y = (screen_height - height) // 2
+        self.root.geometry(f'{width}x{height}+{x}+{y}')
+
+    def configure_fonts(self):
+        """Set font families and sizes."""
         available_fonts = tkFont.families()
         if 'Verdana' in available_fonts:
             font_family = 'Verdana'
@@ -22,32 +37,17 @@ class LoginUI:
         else:
             font_family = 'Helvetica'
 
-        # Define fonts used throughout the UI
         self.base_font = tkFont.Font(family=font_family, size=12)
         self.bold_font = tkFont.Font(family=font_family, size=14, weight='bold')
         self.title_font = tkFont.Font(family=font_family, size=24, weight='bold')
 
-        # Initialize login handler (auth logic)
-        self.login_handler = Login()
-
-        # Set consistent background color with rest of app
-        self.root.configure(bg='#552CB7')
-
-        # Create and render all widgets
-        self.create_widgets()
-
-    def center_window(self, width, height):
-        """Center the window on the screen."""
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
-        x = (screen_width / 2) - (width / 2)
-        y = (screen_height / 2) - (height / 2)
-        self.root.geometry(f'{width}x{height}+{int(x)}+{int(y)}')
-
     def create_widgets(self):
         """Build and place all UI components."""
+        self.create_header()
+        self.create_form()
 
-        # Header section with logo or fallback text
+    def create_header(self):
+        """Display the logo or fallback title."""
         header_frame = tk.Frame(self.root, bg='#FD5A46', height=100)
         header_frame.pack(fill='x')
         header_frame.pack_propagate(False)
@@ -59,11 +59,11 @@ class LoginUI:
             logo = ImageTk.PhotoImage(image)
 
             self.logo_label = tk.Label(header_frame, image=logo, bg='#FD5A46')
-            self.logo_label.image = logo  # Prevent image from being garbage-collected
+            self.logo_label.image = logo
             self.logo_label.pack(pady=10)
+
         except Exception as e:
             print("Error loading logo image:", e)
-            # Fallback text if logo image not found
             tk.Label(
                 header_frame,
                 text="Logo Not Found",
@@ -72,19 +72,17 @@ class LoginUI:
                 fg='white'
             ).pack(pady=0)
 
-        # Main body container
+    def create_form(self):
+        """Build the login form UI."""
         container = tk.Frame(self.root, bg='#552CB7')
         container.pack(fill='both', expand=True, padx=20, pady=20)
 
-        # Center-aligned white panel for form
         center_frame = tk.Frame(container, bg='white', bd=3, relief='ridge')
         center_frame.place(relx=0.5, rely=0.5, anchor='center')
 
-        # Frame containing form elements
         form_frame = tk.Frame(center_frame, bg='white', padx=40, pady=30)
         form_frame.pack()
 
-        # Form title
         tk.Label(
             form_frame,
             text="Please Login",
@@ -94,8 +92,12 @@ class LoginUI:
             pady=10
         ).pack()
 
-        # Username field
-        username_frame = tk.Frame(form_frame, bg='white')
+        self.create_username_field(form_frame)
+        self.create_password_field(form_frame)
+        self.create_buttons(form_frame)
+
+    def create_username_field(self, parent):
+        username_frame = tk.Frame(parent, bg='white')
         username_frame.pack(pady=10, fill='x')
 
         tk.Label(
@@ -118,8 +120,8 @@ class LoginUI:
         )
         self.username_entry.pack(side='left')
 
-        # Password field
-        password_frame = tk.Frame(form_frame, bg='white')
+    def create_password_field(self, parent):
+        password_frame = tk.Frame(parent, bg='white')
         password_frame.pack(pady=10, fill='x')
 
         tk.Label(
@@ -143,11 +145,10 @@ class LoginUI:
         )
         self.password_entry.pack(side='left')
 
-        # Button section
-        button_frame = tk.Frame(form_frame, bg='white')
+    def create_buttons(self, parent):
+        button_frame = tk.Frame(parent, bg='white')
         button_frame.pack(pady=20)
 
-        # Login button
         login_btn = tk.Button(
             button_frame,
             text="Login",
@@ -165,7 +166,6 @@ class LoginUI:
         )
         login_btn.pack(side='left', padx=10)
 
-        # Register button
         register_btn = tk.Button(
             button_frame,
             text="Register",
@@ -191,8 +191,8 @@ class LoginUI:
         success, message = self.login_handler.authenticate(username, password)
 
         if success:
-            self.root.destroy()  # Close login window
-            self.show_dashboard(username)  # Open dashboard
+            self.root.destroy()
+            self.show_dashboard(username)
         else:
             messagebox.showerror("Login Error", message)
 

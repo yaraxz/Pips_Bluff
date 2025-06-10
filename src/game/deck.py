@@ -4,14 +4,20 @@ from .card import Card  # Assuming card.py is in the same directory
 
 
 class Deck:
-    # Represents a deck of playing cards.
+    """Represents a deck of playing cards."""
+
     def __init__(self):
-        # Initializes the deck and discard pile.
+        """Initializes the deck and discard pile."""
         self.cards: List[Card] = []
         self.discard_pile: List[Card] = []
 
     def create_standard_deck(self, assets_path: str):
-        # Creates a standard 52-card deck.
+        """
+        Creates a standard 52-card deck using provided image asset path.
+
+        Args:
+            assets_path: Base path to the card image assets.
+        """
         suits = ["hearts", "diamonds", "clubs", "spades"]
         values = ["A", "02", "03", "04", "05", "06", "07", "08", "09", "10", "J", "Q", "K"]
 
@@ -21,22 +27,39 @@ class Deck:
                 self.cards.append(Card(suit, value, image_path))
 
     def shuffle(self):
-        # Shuffles the cards in the deck.
+        """Shuffles the cards in the deck."""
         random.shuffle(self.cards)
 
     def deal(self, num_cards: int) -> List[Card]:
-        # Deals a specified number of cards from the deck.
+        """
+        Deals a specified number of cards from the top of the deck.
+
+        Args:
+            num_cards: Number of cards to deal.
+
+        Returns:
+            List of dealt Card objects.
+        """
         dealt = []
+
         for _ in range(min(num_cards, len(self.cards))):
             dealt.append(self.cards.pop())
+
         return dealt
 
     def discard(self, card: Card):
-        # Adds a card to the discard pile.
+        """
+        Adds a card to the discard pile.
+
+        Args:
+            card: The Card object to discard.
+        """
         self.discard_pile.append(card)
 
     def reset(self):
-        # Resets the deck by combining it with the discard pile and shuffling.
+        """
+        Resets the deck by combining it with the discard pile and shuffling.
+        """
         self.cards.extend(self.discard_pile)
         self.discard_pile = []
         self.shuffle()

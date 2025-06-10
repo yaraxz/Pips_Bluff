@@ -2,6 +2,7 @@ from database.db_operations import DBOperations
 from security import hash_password
 import logging
 
+
 # Set up logging configuration
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)

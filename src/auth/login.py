@@ -1,5 +1,6 @@
 from tkinter import messagebox
 import tkinter as tk
+
 from database.db_operations import DBOperations
 from security import verify_password
 
@@ -10,6 +11,9 @@ class Login:
         self.db = DBOperations()
 
     def authenticate(self, username, password):
+        """
+        Authenticates the user by checking credentials against the database.
+        """
         # Ensure both fields are provided
         if not username or not password:
             return False, "Username and password are required"
@@ -23,9 +27,13 @@ class Login:
         # Check entered password against stored hash
         if verify_password(password, user['password_hash']):
             return True, "Login successful"
+
         return False, "Invalid username or password"
 
     def login(self):
+        """
+        Handles the login process triggered by the UI.
+        """
         # Get user input from entry fields
         username = self.username_entry.get()
         password = self.password_entry.get()
@@ -37,14 +45,19 @@ class Login:
             # Show success message and navigate to dashboard
             messagebox.showinfo("Success", message)
             self.show_dashboard(username)
+
         else:
             # Show error message on failure
             messagebox.showerror("Error", message)
 
     def show_dashboard(self, username):
-        # Transition to the dashboard interface
+        """
+        Transitions to the dashboard after successful login.
+        """
         from ui.dashboard_ui import DashboardUI
+
         self.root.destroy()
+
         root = tk.Tk()
         DashboardUI(root, username)
         root.mainloop()

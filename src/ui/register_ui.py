@@ -5,6 +5,7 @@ from PIL import Image, ImageTk
 from auth.register import Register
 import tkinter.font as tkFont
 
+
 class RegisterUI:
     def __init__(self, root):
         self.root = root
@@ -12,45 +13,53 @@ class RegisterUI:
         self.root.geometry("600x500")
         self.center_window(600, 500)
 
-        # Set consistent font family depending on system availability
+        # Font selection based on system availability
         available_fonts = tkFont.families()
-        font_family = 'Verdana' if 'Verdana' in available_fonts else ('Arial' if 'Arial' in available_fonts else 'Helvetica')
+        if 'Verdana' in available_fonts:
+            font_family = 'Verdana'
+        elif 'Arial' in available_fonts:
+            font_family = 'Arial'
+        else:
+            font_family = 'Helvetica'
 
+        # Define fonts
         self.base_font = tkFont.Font(family=font_family, size=12)
         self.bold_font = tkFont.Font(family=font_family, size=14, weight='bold')
         self.title_font = tkFont.Font(family=font_family, size=24, weight='bold')
 
-        # Register handler instance for user creation logic
+        # Background theme
+        self.root.configure(bg='#552CB7')
+
+        # Register handler
         self.register_handler = Register()
 
-        # Background color aligned with theme
-        self.root.configure(bg='#552CB7')
+        # Build UI
         self.create_widgets()
 
-    # Center the window on the screen
     def center_window(self, width, height):
+        """Center the window on the screen."""
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
         x = (screen_width / 2) - (width / 2)
         y = (screen_height / 2) - (height / 2)
         self.root.geometry(f'{width}x{height}+{int(x)}+{int(y)}')
 
-    # Create all UI widgets
     def create_widgets(self):
-        # Header with background color
+        """Construct all UI components."""
+
+        # Header with logo or fallback
         header_frame = tk.Frame(self.root, bg='#FD5A46', height=100)
         header_frame.pack(fill='x')
         header_frame.pack_propagate(False)
 
         try:
-            # Attempt to load and display the logo
             logo_path = os.path.join(os.getcwd(), "assets", "images", "logo.png")
             image = Image.open(logo_path)
             image = image.resize((175, 120), Image.Resampling.LANCZOS)
             logo = ImageTk.PhotoImage(image)
 
             self.logo_label = tk.Label(header_frame, image=logo, bg='#FD5A46')
-            self.logo_label.image = logo  # Prevent image garbage collection
+            self.logo_label.image = logo  # Prevent GC
             self.logo_label.pack(pady=10)
         except Exception as e:
             print("Error loading logo image:", e)
@@ -62,19 +71,19 @@ class RegisterUI:
                 fg='white'
             ).pack(pady=0)
 
-        # Container for form and content
+        # Container for content
         container = tk.Frame(self.root, bg='#552CB7')
         container.pack(fill='both', expand=True, padx=20, pady=20)
 
-        # White background central form area
+        # Center white panel
         center_frame = tk.Frame(container, bg='white', bd=3, relief='ridge')
         center_frame.place(relx=0.5, rely=0.5, anchor='center')
 
-        # Form area with padding
+        # Form wrapper
         form_frame = tk.Frame(center_frame, bg='white', padx=40, pady=30)
         form_frame.pack()
 
-        # Registration form title
+        # Title
         tk.Label(
             form_frame,
             text="Join Us Today!",
@@ -84,7 +93,7 @@ class RegisterUI:
             pady=10
         ).pack()
 
-        # Define form fields and associated attribute names
+        # Form fields: label text, attribute name, optional mask
         fields = [
             ("Username:", "username_entry"),
             ("Email:", "email_entry"),
@@ -92,12 +101,10 @@ class RegisterUI:
             ("Confirm Password:", "confirm_password_entry", "*")
         ]
 
-        # Create label and entry for each form field
         for label_text, attr_name, *show in fields:
             field_frame = tk.Frame(form_frame, bg='white')
             field_frame.pack(pady=12, fill='x')
 
-            # Field label
             tk.Label(
                 field_frame,
                 text=label_text,
@@ -108,7 +115,6 @@ class RegisterUI:
                 anchor='e'
             ).pack(side='left', padx=5)
 
-            # Field entry
             entry = tk.Entry(
                 field_frame,
                 font=self.base_font,
@@ -117,17 +123,17 @@ class RegisterUI:
                 insertbackground='#552CB7',
                 relief='sunken',
                 bd=2,
-                show=show[0] if show else None,
-                width=25
+                width=25,
+                show=show[0] if show else None
             )
             entry.pack(side='left')
             setattr(self, attr_name, entry)
 
-        # Buttons Frame
+        # Buttons section
         button_frame = tk.Frame(form_frame, bg='white')
         button_frame.pack(pady=25)
 
-        # Register button (yellow-orange)
+        # Register button
         register_btn = tk.Button(
             button_frame,
             text="Register",
@@ -145,7 +151,7 @@ class RegisterUI:
         )
         register_btn.pack(side='left', padx=10)
 
-        # Login button (blue)
+        # Login button
         login_btn = tk.Button(
             button_frame,
             text="Login",
@@ -163,25 +169,24 @@ class RegisterUI:
         )
         login_btn.pack(side='left', padx=10)
 
-    # Handle registration logic and validation
     def register(self):
+        """Handle registration logic."""
         username = self.username_entry.get()
         email = self.email_entry.get()
         password = self.password_entry.get()
         confirm_password = self.confirm_password_entry.get()
 
-        # Attempt registration
         success, message = self.register_handler.register(
             username, email, password, confirm_password
         )
 
         if success:
-            self.show_login()  # Navigate to login screen if successful
+            self.show_login()
         else:
             messagebox.showerror("Registration Error", message)
 
-    # Open login screen and close current window
     def show_login(self):
+        """Open login UI and close registration window."""
         self.root.destroy()
         from ui.login_ui import LoginUI
         login_root = tk.Tk()
