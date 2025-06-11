@@ -6,12 +6,11 @@ from .deck import Deck
 from .hand import Hand
 
 
-# Defines the ranking of poker hands as an integer enumeration.
-# This makes comparing hand strengths straightforward and less error-prone.
+# Mendefinisikan peringkat tangan poker sebagai enumerasi integer.
 class HandRank(IntEnum):
     """
-    Enumeration for poker hand ranks, ordered from weakest to strongest.
-    The integer values represent the score for each hand type.
+    Enumerasi untuk peringkat tangan poker, diurutkan dari terlemah hingga terkuat.
+    Nilai integer mewakili skor untuk setiap jenis tangan.
     """
     HIGH_CARD = 10
     ONE_PAIR = 20
@@ -25,142 +24,135 @@ class HandRank(IntEnum):
     ROYAL_FLUSH = 100
 
 
-# The main class that orchestrates the card game logic.
+# Kelas utama yang mengatur logika permainan kartu.
 class GameEngine:
     """
-    Manages the game state, including the deck, player's hand, scoring,
-    and the overall flow of a card game.
+    Mengelola status permainan, termasuk dek, tangan pemain, penilaian,
+    dan alur keseluruhan permainan kartu.
     """
-    # A string representing the card ranks in ascending order.
-    # 'T' is used for 10 to maintain a single character representation.
+    # String yang mewakili peringkat kartu dalam urutan menaik.
     RANKS = "23456789TJQKA"
 
     def __init__(self):
         """
-        Initializes the game engine, setting up the deck, hand, scores,
-        and discard pile for a new game session.
+        Menginisialisasi mesin permainan, menyiapkan dek, tangan, skor,
+        dan tumpukan buangan untuk sesi permainan baru.
         """
-        self.deck = Deck()  # The deck of cards for the game.
-        self.hand: Optional[Hand] = None  # The player's current hand.
-        self.score = 0  # Total accumulated score across all rounds.
-        self.discard_pile: List[Card] = []  # Cards discarded by the player.
-        self.current_hand_points = 0  # Score obtained from the current hand only.
+        self.deck = Deck()  # Dek kartu untuk permainan.
+        self.hand: Optional[Hand] = None  # Tangan pemain saat ini.
+        self.score = 0  # Total skor yang terkumpul dari semua ronde.
+        self.discard_pile: List[Card] = []  # Kartu yang dibuang oleh pemain.
+        self.current_hand_points = 0  # Skor yang diperoleh dari tangan saat ini saja.
 
     def initialize_game(self, assets_path: str):
-        """
-        Sets up a new game round. It creates and shuffles a new deck,
-        resets the current hand and discard pile, but keeps the total score.
-        Args:
-            assets_path: The file path to the directory containing card images.
-        """
-        self.deck = Deck()  # Create a new Deck instance.
-        self.deck.create_standard_deck(assets_path)  # Populate with 52 standard cards.
-        self.deck.shuffle()  # Randomize the order of cards.
-        self.hand = None  # Clear the player's hand.
-        self.current_hand_points = 0  # Reset points for the new hand.
-        self.discard_pile = []  # Empty the discard pile.
-        # The total score (self.score) is intentionally not reset to accumulate over sessions.
+        self.deck = Deck()  # Membuat instance Deck baru.
+        self.deck.create_standard_deck(assets_path)  # Mengisi dengan 52 kartu standar.
+        self.deck.shuffle()  # Mengacak urutan kartu.
+        self.hand = None  # Mengosongkan tangan pemain.
+        self.current_hand_points = 0  # Mengatur ulang poin untuk tangan baru.
+        self.discard_pile = []  # Mengosongkan tumpukan buangan.
+        # Total skor (self.score) sengaja tidak direset untuk akumulasi antar sesi.
 
     def deal_hand(self, num_cards=5) -> Hand:
         """
-        Deals a specified number of cards to the player.
-        If the deck is low on cards, it recycles the discard pile.
+        Membagikan sejumlah kartu tertentu kepada pemain.
+        Jika dek kehabisan kartu, daur ulang tumpukan buangan.
         Args:
-            num_cards: The number of cards to deal for the hand (default is 5).
+            num_cards: Jumlah kartu yang akan dibagikan untuk tangan (default adalah 5).
         Returns:
-            A new Hand object containing the dealt cards.
+            Objek Hand baru yang berisi kartu yang dibagikan.
         """
-        # Check if the deck has enough cards to deal.
+        # Memeriksa apakah dek memiliki cukup kartu untuk dibagikan.
         if len(self.deck.cards) < num_cards:
-            # If not, add the discarded cards back into the deck.
+            # Jika tidak, tambahkan kartu yang dibuang kembali ke dalam dek.
             self.deck.cards.extend(self.discard_pile)
-            self.discard_pile = []  # Clear the discard pile.
-            self.deck.shuffle()  # Re-shuffle the deck.
+            self.discard_pile = []  # Mengosongkan tumpukan buangan.
+            self.deck.shuffle()  # Mengacak ulang dek.
 
-        # Deal the requested number of cards from the deck.
+        # Membagikan jumlah kartu yang diminta dari dek.
         cards = self.deck.deal(num_cards)
-        self.hand = Hand(cards)  # Create a new Hand with these cards.
-        self.current_hand_points = 0  # Reset the score for this new hand.
+        self.hand = Hand(cards)  # Membuat Hand baru dengan kartu-kartu ini.
+        self.current_hand_points = 0  # Mengatur ulang skor untuk tangan baru ini.
         return self.hand
 
     def discard_cards(self, card_indices: List[int]) -> List[Card]:
         """
-        Removes cards from the player's hand based on their indices and
-        moves them to the discard pile.
+        Menghapus kartu dari tangan pemain berdasarkan indeksnya dan
+        memindahkannya ke tumpukan buangan.
         Args:
-            card_indices: A list of integer indices for the cards to be discarded.
+            card_indices: Daftar indeks integer untuk kartu yang akan dibuang.
         Returns:
-            A list of the Card objects that were discarded.
+            Daftar objek Card yang dibuang.
         """
-        # Ensure there is a hand to discard from.
+        # Memastikan ada tangan untuk dibuang.
         if not self.hand:
             return []
 
         discarded = []
-        # Sort indices in reverse to avoid issues with list re-indexing after popping items.
+        # Mengurutkan indeks secara terbalik untuk menghindari masalah dengan pengindeksan ulang list setelah menghapus item.
         for i in sorted(card_indices, reverse=True):
-            # Check if the index is valid.
+            # Memeriksa apakah indeks valid.
             if 0 <= i < len(self.hand.cards):
-                # Remove the card from the hand and add it to the 'discarded' list.
+                # Menghapus kartu dari tangan dan menambahkannya ke daftar 'discarded'.
                 discarded.append(self.hand.cards.pop(i))
 
-        # Add all discarded cards to the game's discard pile.
+        # Menambahkan semua kartu yang dibuang ke tumpukan buangan permainan.
         self.discard_pile.extend(discarded)
         return discarded
 
     def draw_cards(self, num_cards: int) -> List[Card]:
         """
-        Draws a specified number of new cards from the top of the deck.
+        Mengambil sejumlah kartu baru dari atas dek.
         Args:
-            num_cards: The integer number of cards to draw.
+            num_cards: Jumlah integer kartu yang akan diambil.
         Returns:
-            A list of new Card objects drawn from the deck.
+            Daftar objek Card baru yang diambil dari dek.
         """
         return self.deck.deal(num_cards)
 
     def evaluate_hand(self) -> Dict:
         """
-        Evaluates the player's current 5-card hand to determine its poker rank and score.
-        It updates both the current hand's score and the total accumulated score.
+        Mengevaluasi tangan pemain saat ini (5 kartu) untuk menentukan peringkat poker dan skornya.
+        Memperbarui skor tangan saat ini dan total skor yang terkumpul.
         Returns:
-            A dictionary containing the hand's type (e.g., "Full House") and its score.
+            Kamus yang berisi jenis tangan (misalnya, "Full House") dan skornya.
         """
-        # The hand must exist and contain exactly 5 cards to be evaluated.
+        # Tangan harus ada dan berisi tepat 5 kartu untuk dievaluasi.
         if not self.hand or len(self.hand.cards) != 5:
-            return {"type": "Invalid Hand", "score": 0}
+            return {"type": "Tangan Tidak Valid", "score": 0}
 
-        # Normalize card values and suits for easier processing.
+        # Normalisasi nilai dan suit kartu untuk mempermudah pemrosesan.
         normalized_values = []
         normalized_suits = []
 
         for card in self.hand.cards:
-            # Standardize card value representation (e.g., '0' stripping, '10' to 'T').
+            # Standarisasi representasi nilai kartu (misalnya, menghapus '0', '10' menjadi 'T').
             value = card.value.lstrip('0') if card.value[0] == '0' else card.value
             value = 'T' if value == '10' else value
             normalized_values.append(value)
-            # Standardize suit representation to the first letter, uppercase.
+            # Standarisasi representasi suit ke huruf pertama, huruf besar.
             normalized_suits.append(card.suit[0].upper())
 
-        # Count occurrences of each rank and suit.
+        # Menghitung kemunculan setiap peringkat dan suit.
         rank_counts = Counter(normalized_values)
         suit_counts = Counter(normalized_suits)
-        # Get a sorted list of how many times each rank appears (e.g., [3, 1, 1] for a three of a kind).
+        # Mendapatkan daftar terurut berapa kali setiap peringkat muncul (misalnya, [3, 1, 1] untuk three of a kind).
         counts = sorted(rank_counts.values(), reverse=True)
 
-        # Check for a flush (all cards of the same suit).
+        # Memeriksa flush (semua kartu memiliki suit yang sama).
         is_flush = len(suit_counts) == 1
 
-        # Check for a straight (five cards in sequence).
+        # Memeriksa straight (lima kartu berurutan).
         indices = [self.RANKS.index(val) for val in normalized_values]
-        indices = sorted(set(indices)) # Use set to handle pairs correctly
+        indices = sorted(set(indices)) # Menggunakan set untuk menangani pasangan dengan benar
         is_straight = len(indices) == 5 and (indices[-1] - indices[0] == 4)
-        # Special case for the Ace-low straight (A, 2, 3, 4, 5).
+        # Kasus khusus untuk straight Ace-rendah (A, 2, 3, 4, 5).
         if set(normalized_values) == {'A', '2', '3', '4', '5'}:
             is_straight = True
-            # Reorder indices for Ace-low to correctly evaluate as a straight.
+            # Mengurutkan ulang indeks untuk Ace-rendah agar dievaluasi dengan benar sebagai straight.
             indices = [0, 1, 2, 3, 12]
 
-        # Determine hand rank based on the checks above, from best to worst.
+        # Menentukan peringkat tangan berdasarkan pemeriksaan di atas, dari terbaik hingga terburuk.
         if is_flush and set(normalized_values) == {'A', 'K', 'Q', 'J', 'T'}:
             result = {"type": "Royal Flush", "score": HandRank.ROYAL_FLUSH}
         elif is_flush and is_straight:
@@ -182,7 +174,7 @@ class GameEngine:
         else:
             result = {"type": "High Card", "score": HandRank.HIGH_CARD}
 
-        # Update the game's scores with the result of this hand.
+        # Memperbarui skor permainan dengan hasil dari tangan ini.
         self.current_hand_points = result['score']
         self.score += self.current_hand_points
 
@@ -190,7 +182,7 @@ class GameEngine:
 
     def reset_score(self):
         """
-        Manually resets the total accumulated score to zero.
-        Useful for starting a new game session from scratch.
+        Secara manual mengatur ulang total skor yang terkumpul menjadi nol.
+        Berguna untuk memulai sesi permainan baru dari awal.
         """
         self.score = 0

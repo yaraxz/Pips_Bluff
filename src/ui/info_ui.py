@@ -132,7 +132,7 @@ class InfoUI:
     def add_title(self):
         title_label = tk.Label(
             self.content_frame,
-            text="Poker Hand Rankings",
+            text="Bind Rank",
             font=("Arial", 20, "bold"),
             fg=self.accent_color,
             bg=self.bg_color

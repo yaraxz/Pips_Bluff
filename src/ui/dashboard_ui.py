@@ -172,11 +172,9 @@ class DashboardUI:
                 fill='x'
             )
 
-            # Add extra button under "Play"
             if text == "Play":
                 self.create_info_button(nav_frame)
 
-            # Add About Pip's Bluff button under Settings
             if text == "Settings":
                 self.create_about_button(nav_frame)
 

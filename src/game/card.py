@@ -5,42 +5,42 @@ from PIL import Image, ImageTk
 
 @dataclass
 class Card:
-    suit: str
-    value: str
-    image_path: str
-    tk_image: Optional[ImageTk.PhotoImage] = None
+    suit: str  # Jenis kartu: Hearts, Diamonds, Clubs, Spades
+    value: str  # Nilai kartu: 02, 03, ..., 10, J, Q, K, A
+    image_path: str  # Path ke file gambar kartu
+    tk_image: Optional[ImageTk.PhotoImage] = None  # Objek gambar Tkinter (opsional)
 
     def load_image(self, size=(100, 145)) -> bool:
         """
-        Loads the card image from disk and stores it as a Tkinter-compatible image.
+        Memuat gambar kartu dari path dan simpan sebagai objek ImageTk untuk ditampilkan di Tkinter.
 
         Args:
-            size (tuple): Desired (width, height) of the image.
+            size (tuple): Ukuran gambar yang diinginkan dalam format (lebar, tinggi)
 
         Returns:
-            bool: True if image is loaded successfully, False if file not found.
+            bool: True jika berhasil dimuat, False jika file tidak ditemukan.
         """
         try:
-            img = Image.open(self.image_path).resize(size)
-            self.tk_image = ImageTk.PhotoImage(img)
+            img = Image.open(self.image_path).resize(size)  # Buka dan ubah ukuran gambar
+            self.tk_image = ImageTk.PhotoImage(img)  # Simpan sebagai objek ImageTk
             return True
-
         except FileNotFoundError:
-            return False
+            return False  # Jika file tidak ditemukan
 
     def __str__(self) -> str:
         """
-        Returns a human-readable string for the card (e.g., '10 of Hearts').
+        Mengembalikan string representasi kartu yang mudah dibaca, seperti '10 of Hearts'.
 
         Returns:
-            str: String representation of the card.
+            str: Representasi string dari kartu
         """
+        # Pemetaan nilai kartu agar lebih mudah dibaca
         value_map = {
             "02": "2", "03": "3", "04": "4", "05": "5",
             "06": "6", "07": "7", "08": "8", "09": "9",
             "10": "10", "J": "J", "Q": "Q", "K": "K", "A": "A"
         }
 
-        display_value = value_map.get(self.value, self.value)
+        display_value = value_map.get(self.value, self.value)  # Ambil nilai tampilan dari peta
 
-        return f"{display_value} of {self.suit}"
+        return f"{display_value} of {self.suit}"  # Gabungkan dengan jenis kartu

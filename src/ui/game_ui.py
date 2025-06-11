@@ -6,30 +6,31 @@ from game.game_engine import GameEngine
 
 class GameUI:
     def __init__(self, parent, username: str, assets_path: str):
+        # Inisialisasi UI permainan
         self.parent = parent
         self.username = username
         self.assets_path = Path(assets_path)
-        self.engine = GameEngine()
-        self.card_widgets = []
-        self.card_images = []
-        self.selected_for_discard = set()
-        self._processing = False
-        self.hands_played = 0
+        self.engine = GameEngine()  # Mesin logika permainan
+        self.card_widgets = []  # Widget kartu yang ditampilkan
+        self.card_images = []  # Referensi gambar kartu agar tidak terhapus
+        self.selected_for_discard = set()  # Indeks kartu yang dipilih untuk dibuang
+        self._processing = False  # Status pemrosesan
+        self.hands_played = 0  # Jumlah tangan yang dimainkan
 
-        self.setup_ui()
-        self.start_new_hand()
+        self.setup_ui()  # Bangun tampilan UI
+        self.start_new_hand()  # Mulai permainan pertama
 
 
     def setup_ui(self):
-        # Main frame
+        # Frame utama
         self.main_frame = tk.Frame(self.parent, bg='#F5F5F5')
         self.main_frame.pack(fill='both', expand=True)
 
-        # Header section
+        # Bagian atas header
         self.header = tk.Frame(self.main_frame, bg='#F5F5F5', height=50)
         self.header.pack(fill='x')
 
-        # Username label
+        # Label nama pengguna
         tk.Label(
             self.header,
             text=f"{self.username} - Bind",
@@ -38,11 +39,11 @@ class GameUI:
             bg='#F5F5F5'
         ).pack(side='left', padx=20, pady=10)
 
-        # Stats frame
+        # Statistik permainan (di kanan atas)
         self.top_right = tk.Frame(self.header, bg='#F5F5F5')
         self.top_right.pack(side='right', padx=20)
 
-        # Stats labels
+        # Jumlah tangan dimainkan
         self.hands_played_label = tk.Label(
             self.top_right,
             text="Hands: 0",
@@ -51,6 +52,7 @@ class GameUI:
         )
         self.hands_played_label.pack(anchor='e')
 
+        # Skor total
         self.total_score_label = tk.Label(
             self.top_right,
             text="Total: 0",
@@ -59,6 +61,7 @@ class GameUI:
         )
         self.total_score_label.pack(anchor='e')
 
+        # Label hasil evaluasi
         self.result_label = tk.Label(
             self.top_right,
             text="",
@@ -68,14 +71,15 @@ class GameUI:
         )
         self.result_label.pack(anchor='e', pady=(5, 0))
 
-        # Cards display area
+        # Area tampilan kartu
         self.cards_frame = tk.Frame(self.main_frame, bg='#F5F5F5')
         self.cards_frame.pack(pady=20)
 
-        # Control buttons
+        # Tombol-tombol kontrol
         self.controls = tk.Frame(self.main_frame, bg='#F5F5F5')
         self.controls.pack(pady=10)
 
+        # Tombol untuk mulai tangan baru
         self.new_hand_btn = tk.Button(
             self.controls,
             text="New Hand",
@@ -87,6 +91,7 @@ class GameUI:
         )
         self.new_hand_btn.pack(side='left', padx=8)
 
+        # Tombol untuk membuang kartu
         self.discard_btn = tk.Button(
             self.controls,
             text="Discard Selected",
@@ -99,6 +104,7 @@ class GameUI:
         )
         self.discard_btn.pack(side='left', padx=8)
 
+        # Tombol untuk bermain/memainkan kartu
         self.play_btn = tk.Button(
             self.controls,
             text="Play Hand",
@@ -113,6 +119,7 @@ class GameUI:
 
 
     def start_new_hand(self):
+        # Mulai tangan/kartu baru
         self.engine.initialize_game(str(self.assets_path))
         self.engine.deal_hand()
         self.selected_for_discard = set()
@@ -124,17 +131,19 @@ class GameUI:
 
 
     def update_stats(self):
+        # Perbarui tampilan statistik
         self.hands_played_label.config(text=f"Hands: {self.hands_played}")
         self.total_score_label.config(text=f"Total: {self.engine.score}")
 
 
     def update_button_states(self):
+        # Atur status tombol berdasarkan kondisi permainan
         self.discard_btn['state'] = tk.NORMAL if self.selected_for_discard else tk.DISABLED
         self.play_btn['state'] = tk.NORMAL if self.engine.hand and not self.selected_for_discard else tk.DISABLED
 
 
     def display_cards(self):
-        # Clear existing cards
+        # Hapus kartu lama dari UI
         for widget in self.card_widgets:
             widget.destroy()
         self.card_widgets = []
@@ -143,7 +152,7 @@ class GameUI:
         if not self.engine.hand:
             return
 
-        # Create new card widgets
+        # Tampilkan kartu satu per satu
         for i, card in enumerate(self.engine.hand.cards):
             bg_color = '#FF6F61' if i in self.selected_for_discard else 'white'
             frame_color = '#FF0000' if i in self.selected_for_discard else '#F5F5F5'
@@ -157,6 +166,7 @@ class GameUI:
             card_frame.grid(row=0, column=i, padx=10)
 
             try:
+                # Coba tampilkan gambar kartu
                 img_path = self.assets_path / "cards_large" / f"card_{card.suit}_{self._format_value(card.value)}.png"
                 img = Image.open(img_path).resize((100, 145))
                 tk_img = ImageTk.PhotoImage(img)
@@ -169,7 +179,7 @@ class GameUI:
                 )
                 lbl.pack(padx=5, pady=5)
             except Exception:
-                # Fallback text card
+                # Jika gambar gagal dimuat, tampilkan teks
                 lbl = tk.Label(
                     card_frame,
                     text=str(card),
@@ -179,11 +189,13 @@ class GameUI:
                 )
                 lbl.pack(padx=5, pady=5)
 
+            # Event klik: pilih kartu
             lbl.bind("<Button-1>", lambda e, idx=i: self.toggle_card_selection(idx))
             self.card_widgets.append(card_frame)
 
 
     def toggle_card_selection(self, index):
+        # Tambah/hapus indeks kartu ke/dari set yang akan dibuang
         if index in self.selected_for_discard:
             self.selected_for_discard.remove(index)
         else:
@@ -193,6 +205,7 @@ class GameUI:
 
 
     def discard_and_replace(self):
+        # Buang kartu yang dipilih dan ganti dengan yang baru
         if not self.engine.hand or not self.selected_for_discard:
             return
 
@@ -212,6 +225,7 @@ class GameUI:
 
 
     def play_hand(self):
+        # Evaluasi tangan/kartu saat ini dan tampilkan hasil
         if self._processing or not self.engine.hand or self.play_btn['state'] == tk.DISABLED:
             return
 
@@ -232,17 +246,19 @@ class GameUI:
 
 
     def disable_buttons(self):
+        # Matikan tombol sementara selama proses evaluasi
         self.discard_btn['state'] = tk.DISABLED
         self.play_btn['state'] = tk.DISABLED
 
 
     def _format_value(self, value: str) -> str:
+        # Format nilai kartu untuk pemanggilan gambar
         if value.startswith('0') and value[1:].isdigit():
             value = value[1:]
         if value in ["J", "Q", "K", "A"]:
             return value
         try:
             num = int(value)
-            return f"{num:02d}"
+            return f"{num:02d}"  # Format jadi dua digit, misal 2 → 02
         except ValueError:
             return value
